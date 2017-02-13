@@ -288,7 +288,7 @@ final class AuthMiddleware: RouterMiddleware {
         }
         
         
-        if path.hasPrefix("/auth") || path.hasPrefix("/static") {
+        if path.hasPrefix("/auth") || path.hasPrefix("/static") || path.hasPrefix("/favicon.ico") {
             session.handle(request: request, response: response, next: next)
             return
         }
