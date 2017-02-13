@@ -9,12 +9,15 @@ public extension JSONConvertable {
             if let label = property.label {
                 if let value = property.value as? [JSONConvertable] {
                     result[label] = value.map { $0.jsonObject }
+                } else if let value = property.value as? JSONConvertable {
+                    result[label] = value.jsonObject
                 } else {
                     result[label] = property.value
                 }
             }
         }
 
+        print(result)
         return result
     }
 }
