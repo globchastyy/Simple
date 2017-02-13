@@ -1,6 +1,6 @@
 //
 //  DictionaryExtensions.swift
-//  jtinsights
+//  Simple
 //
 //  Created by Alexey Globchastyy on 23/01/2017.
 //

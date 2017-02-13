@@ -1,6 +1,6 @@
 //
 //  StringExtensions.swift
-//  jtinsights
+//  Simple
 //
 //  Created by Alexey Globchastyy on 24/01/2017.
 //

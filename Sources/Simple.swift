@@ -1,6 +1,6 @@
 //
 //  Simple.swift
-//  jtinsights
+//  Simple
 //
 //  Created by Alexey Globchastyy on 23/01/2017.
 //
@@ -235,7 +235,10 @@ final class AuthMiddleware: RouterMiddleware {
                     let host = request.url.host,
                     let scheme = request.url.scheme,
                     let port = request.url.port
-                else { return response.error() }
+                else {
+                    let errorMessage: String = "Error: Scheme: \(String(describing: request.url.scheme)), Host: \(String(describing: request.url.host)), Port: \(String(describing: request.url.port))"
+                    return response.error(message: errorMessage)
+                }
                 
                 let portString: String
                 
