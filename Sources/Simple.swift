@@ -233,19 +233,18 @@ final class AuthMiddleware: RouterMiddleware {
             router.get("/auth/login") { request, response, next in
                 guard
                     let host = request.url.host,
-                    let scheme = request.url.scheme,
-                    let port = request.url.port
+                    let scheme = request.url.scheme
                 else {
                     let errorMessage: String = "Error: Scheme: \(String(describing: request.url.scheme)), Host: \(String(describing: request.url.host)), Port: \(String(describing: request.url.port))"
                     return response.error(message: errorMessage)
                 }
-                
+            
                 let portString: String
                 
-                if port == 80 {
-                    portString = ""
-                } else {
+                if let port = request.url.port {
                     portString = ":\(port)"
+                } else {
+                    portString = ""
                 }
                 
                 googleCredentials.callbackUrl = scheme + "://" + host + portString + "/auth/login/google/callback"
