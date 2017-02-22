@@ -24,24 +24,24 @@ import KituraSession
 public extension URL {
     public func updatedQueryItem(name: String, value: String) -> URL? {
         let queryItems = [URLQueryItem(name: name, value: value)]
-        
+
         let items = self.query?.components(separatedBy: "&")
             .map { $0.components(separatedBy: "=") }
             .map { URLQueryItem(name: $0[0], value: $0[1]) }
             .filter { $0.name != name }
-        
+
         var components = URLComponents(url: self, resolvingAgainstBaseURL: false)
         components?.queryItems = (items ?? []) + queryItems
         return components?.url
     }
-    
+
     public var fullPath: String {
         if let query = self.query {
             return self.path + "?" + query
         } else {
             return self.path
         }
-        
+
     }
 }
 
@@ -57,19 +57,19 @@ extension RouterRequest: Request {
     public var query: [String: String] {
         return queryParameters
     }
-    
+
     public var params: [String: String] {
         return parameters
     }
-    
+
     public var url: URL {
         return urlURL
     }
-    
+
     public var hasQuery: Bool {
         return urlURL.query != nil
     }
-    
+
     public var json: JSON? {
         return readJSON()
     }
@@ -98,19 +98,20 @@ extension RouterResponse: Response {
 
         send(string)
     }
-    
+
     public func redirect(path: String) {
         _ = try? self.redirect(path)
     }
 
     public func render(view: String) {
-        _ = try? render(view, context: [:])
-    }
+         render(view: view, context: [:])
+     }
 
 
-    public func render(view: String, context: [String: Any?]) {
-        _ = try? render(view, context: context)
-    }
+     public func render(view: String, context: [String: Any?]) {
+         headers["Content-Type"] = "text/html; utf-8"
+         _ = try? render(view, context: context)
+     }
 
     public func error() {
         _ = try? send(status: .badRequest).end()
@@ -124,11 +125,11 @@ extension RouterResponse: Response {
         let json = JSON(dict.removedNils)
         send(json)
     }
-    
+
     public func send(_ array: [JSONConvertable]?) {
         send(array?.map { $0.jsonObject })
     }
-    
+
     public func send(_ object: JSONConvertable?) {
         if let object = object?.jsonObject {
             send(object)
@@ -176,18 +177,18 @@ public typealias RequestHandler = (Request, Response) -> Void
 class SimpleTemplateEngine: TemplateEngine {
     public var fileExtension: String { return "html" }
     private let namespace: Namespace
-    
+
     public init() {
         let namespace = Namespace()
         namespace.registerFilter("url") { (value: Any?) in
             guard let stringValue = value as? String else { return value }
-            
+
             return stringValue.asPath
         }
-        
+
         self.namespace = namespace
     }
-    
+
     public func render(filePath: String, context: [String: Any]) throws -> String {
         let templatePath = Path(filePath)
         let templateDirectory = templatePath.parent()
@@ -208,28 +209,28 @@ final class LoggerMiddleware: RouterMiddleware {
 
 final class AuthMiddleware: RouterMiddleware {
     weak var router: Router?
-    
+
     private var credentials: Credentials?
     private var session: Session?
     private var googleCredentials: CredentialsGoogle?
-    
+
     var oauth: GoogleAuth? {
         didSet {
             guard let oauth = oauth else { return }
             guard let router = router else { return }
-            
+
             let googleCredentials = CredentialsGoogle(clientId: oauth.id, clientSecret: oauth.secret, callbackUrl: "", options: ["scope":"email"])
-            
+
             let credentials = Credentials()
             credentials.register(plugin: googleCredentials)
             credentials.options["failureRedirect"] = "/auth/login"
             credentials.options["successRedirect"] = "/"
-            
-            
+
+
             self.credentials = credentials
             self.session = Session(secret: oauth.id + oauth.secret)
             self.googleCredentials = googleCredentials
-            
+
             router.get("/auth/login") { request, response, next in
                 guard
                     let host = request.url.host,
@@ -238,17 +239,17 @@ final class AuthMiddleware: RouterMiddleware {
                     let errorMessage: String = "Error: Scheme: \(String(describing: request.url.scheme)), Host: \(String(describing: request.url.host)), Port: \(String(describing: request.url.port))"
                     return response.error(message: errorMessage)
                 }
-            
+
                 let portString: String
-                
+
                 if let port = request.url.port {
                     portString = ":\(port)"
                 } else {
                     portString = ""
                 }
-                
+
                 googleCredentials.callbackUrl = scheme + "://" + host + portString + "/auth/login/google/callback"
-                
+
                 try? response.send("<!DOCTYPE html><html><body><a href=/auth/login/google>Log In with Google</a></body></html>\n\n").end()
                 next()
             }
@@ -257,21 +258,21 @@ final class AuthMiddleware: RouterMiddleware {
                 try response.redirect("/auth/login")
                 next()
             }
-            
+
             router.get("/auth/login/google",
                        handler: credentials.authenticate(credentialsType: googleCredentials.name))
             router.get("/auth/login/google/callback",
                        handler: credentials.authenticate(credentialsType: googleCredentials.name, failureRedirect: "/login"))
         }
     }
-    
+
     init(router: Router) {
         self.router = router
         credentials = nil
         session = nil
         googleCredentials = nil
     }
-    
+
     func handle(request: RouterRequest, response: RouterResponse, next: @escaping () -> Void) throws {
         guard
             let credentials = credentials,
@@ -286,13 +287,13 @@ final class AuthMiddleware: RouterMiddleware {
             }
             return
         }
-        
-        
+
+
         if path.hasPrefix("/auth") || path.hasPrefix("/static") || path.hasPrefix("/favicon.ico") {
             session.handle(request: request, response: response, next: next)
             return
         }
-        
+
         session.handle(request: request, response: response) {
             credentials.handle(request: request, response: response) {
                 guard let email = request.userProfile?.emails?.first else {
@@ -300,12 +301,12 @@ final class AuthMiddleware: RouterMiddleware {
                     next()
                     return
                 }
-                
+
                 if oauth.accessList.contains(email.value) {
                     next()
                     return
                 }
-                
+
                 _ = try? response.redirect("/auth/logout")
                 next()
             }
@@ -317,50 +318,50 @@ public struct GoogleAuth {
     fileprivate let id: String
     fileprivate let secret: String
     fileprivate let accessList: [String]
-    
+
     public init(id: String, secret: String, access: [String]) {
         self.id = id
         self.secret = secret
         self.accessList = access
     }
-    
+
     public init(id: String, secret: String, accessFile: String) {
         self.id = id
         self.secret = secret
-        
+
         if let access = GoogleAuth.load(file: accessFile) {
             self.accessList = access
         } else {
             self.accessList = []
         }
     }
-    
-    
+
+
     private static func load(file: String) -> [String]? {
         guard let parentDirectory = #file.components(separatedBy: "/Packages/").first else {
             return nil
         }
-        
+
         let path = Path(parentDirectory + file)
-        
+
         guard let result = try? path.read(.utf8) else {
             return nil
         }
-        
+
         let emails = result
             .trimmingCharacters(in: .newlines)
             .components(separatedBy: .newlines)
 
         return emails
     }
-    
+
 
 }
 
 public final class Server {
     private let router = Router()
     private let authMiddleware: AuthMiddleware
-    
+
     public var oauth: GoogleAuth? {
         get {
             return authMiddleware.oauth
@@ -369,11 +370,11 @@ public final class Server {
             authMiddleware.oauth = newValue
         }
     }
-    
+
     public init() {
         self.authMiddleware = AuthMiddleware(router: router)
-        
-        
+
+
         router.all(middleware: ResponseTime())
         router.all(middleware: self.authMiddleware)
         router.all(middleware: LoggerMiddleware())
@@ -382,13 +383,13 @@ public final class Server {
         router.setDefault(templateEngine: SimpleTemplateEngine())
     }
 
-    
+
     public func get(_ path: String, handler: @escaping RequestHandler) {
         router.get(path) { (req, res, next) in
             handler(req, res)
             next()
         }
-        
+
     }
 
     public func post(_ path: String, handler: @escaping RequestHandler) {
@@ -406,7 +407,7 @@ public final class Server {
         if let fastCGIPort = fastCGIPort {
             Kitura.addFastCGIServer(onPort: fastCGIPort, with: router)
         }
-        
+
         Kitura.run()
     }
 
@@ -425,7 +426,7 @@ public final class Server {
 
         }
     }
-    
+
     public func register(handler: RouteHandler) {
         register("", handler: handler)
     }
