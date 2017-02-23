@@ -76,6 +76,8 @@ extension RouterRequest: Request {
 }
 
 public protocol Response {
+    func render(view: String, contentType: String)
+    func render(view: String, context: [String: Any?], contentType: String)
     func render(view: String)
     func render(view: String, context: [String: Any?])
     func error(message: String)
@@ -103,15 +105,24 @@ extension RouterResponse: Response {
         _ = try? self.redirect(path)
     }
 
+    public func render(view: String, contentType: String) {
+        render(view: view, context: [:], contentType: contentType)
+    }
+
     public func render(view: String) {
-         render(view: view, context: [:])
-     }
+        render(view: view, contentType: "text/html")
+    }
+
+    public func render(view: String, context: [String: Any?]) {
+        render(view: view, context: context, contentType: "text/html")
+    }
 
 
-     public func render(view: String, context: [String: Any?]) {
-         headers["Content-Type"] = "text/html; utf-8"
+    public func render(view: String, context: [String: Any?], contentType: String) {
+         headers["Content-Type"] = contentType
          _ = try? render(view, context: context)
      }
+
 
     public func error() {
         _ = try? send(status: .badRequest).end()
