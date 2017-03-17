@@ -187,27 +187,28 @@ public typealias RequestHandler = (Request, Response) -> Void
 
 class SimpleTemplateEngine: TemplateEngine {
     public var fileExtension: String { return "html" }
-    private let namespace: Namespace
+    private let internalExtension: Extension
 
     public init() {
-        let namespace = Namespace()
+        let namespace = Extension()
         namespace.registerFilter("url") { (value: Any?) in
             guard let stringValue = value as? String else { return value }
 
             return stringValue.asPath
         }
 
-        self.namespace = namespace
+        self.internalExtension = namespace
     }
 
     public func render(filePath: String, context: [String: Any]) throws -> String {
         let templatePath = Path(filePath)
         let templateDirectory = templatePath.parent()
-        let template = try Template(path: templatePath)
+
         let loader = FileSystemLoader(paths: [templateDirectory])
+        let environment = Environment(loader: loader, extensions: [internalExtension])
         var context = context
         context["loader"] = loader
-        return try template.render(Context(dictionary: context, namespace: namespace))
+        return try environment.renderTemplate(name: templatePath.lastComponent, context: context)
     }
 }
 
