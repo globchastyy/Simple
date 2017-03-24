@@ -383,7 +383,7 @@ public final class Server {
         }
     }
 
-    public init() {
+    public init(root: String? = nil) {
         self.authMiddleware = AuthMiddleware(router: router)
 
 
@@ -391,7 +391,7 @@ public final class Server {
         router.all(middleware: self.authMiddleware)
         router.all(middleware: LoggerMiddleware())
         router.all(middleware: Compression())
-        router.all("/static", middleware: StaticFileServer())
+        router.all("\(root ?? "")/static", middleware: StaticFileServer())
         router.setDefault(templateEngine: SimpleTemplateEngine())
     }
 
