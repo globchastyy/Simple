@@ -13,7 +13,6 @@ import SwiftyJSON
 import Stencil
 import KituraTemplateEngine
 import PathKit
-import ResponseTime
 import Foundation
 import KituraCompression
 import HeliumLogger
@@ -387,7 +386,6 @@ public final class Server {
         self.authMiddleware = AuthMiddleware(router: router)
 
 
-        router.all(middleware: ResponseTime())
         router.all(middleware: self.authMiddleware)
         router.all(middleware: LoggerMiddleware())
         router.all(middleware: Compression())
