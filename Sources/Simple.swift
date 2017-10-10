@@ -349,7 +349,7 @@ public struct GoogleAuth {
 
 
     private static func load(file: String) -> [String]? {
-        guard let parentDirectory = #file.components(separatedBy: "/Packages/").first else {
+        guard let parentDirectory = #file.components(separatedBy: "/.build/").first else {
             return nil
         }
 
